@@ -22,7 +22,6 @@
  *	 	 EXAMPLE (8)
  * */
 void buildTreeFromFile(char* fileName, TTree* tree) {
-
 	// Verificarea argumentelor
 	if(fileName == NULL || tree == NULL)
 		return;
@@ -94,31 +93,22 @@ Range* inorderKeyQuery(TTree* tree) {
 	TreeNode* n = minimum(tree->root);
 	
 	while(n) {
-		r->index[r->size] = *((int*) n->info);
-		r->size++;
+		r->index[r->size++] = *((int*)n->info);
 		n = n->next;
 	}
 
 	return r;
 }
 
-int lvl(TTree* tree, TreeNode* root, char* elem) {
-	if(tree == NULL || root == NULL) 
+int lvl(TreeNode* root) {
+	if(root == NULL) 
 		return 0;
-	int l = 0;
-
-	while(root) {
-		if(tree->compare(root->elem, elem) == 0) 
-			return l;
-		if(tree->compare(root->elem, elem) == 1) {
-			l++;
-			root = root->right;
-		}
-		if(tree->compare(root->elem, elem) == -1) {
-			l++;
-			root = root->left;
-		}
+	int l = 1;
+	while(root->parent) {
+		root = root->parent;
+		l++;
 	}
+	return l;
 }
 
 /* Functie pentru extragerea cheii formate din valorile
@@ -128,14 +118,14 @@ int lvl(TTree* tree, TreeNode* root, char* elem) {
  * parcurgerii in inordine a arborelui)
  */
 Range* levelKeyQuery(TTree* tree) {
-	if(tree == NULL || tree->root == NULL) 
+	if(tree == NULL) 
 		return NULL;
 	
 	Range* r = (Range*) malloc(sizeof(Range));
 	r->capacity = 1000;
 	r->size = 0;
 	r->index = (int*) malloc((sizeof(int))*(r->capacity));
-	int lmax = 0, l = 0, nivel = 0;
+	int lmax = 0, l = 1, nivel = -1;
 	TreeNode* n = minimum(tree->root);
 
 	// gasire element cu cea mai mare frecventa 
@@ -145,18 +135,16 @@ Range* levelKeyQuery(TTree* tree) {
 		} else if(n->next && tree->compare(n->elem, n->next->elem) != 0) {
 			if(l>lmax) {
 				lmax = l;
-				nivel = lvl(tree, tree->root, n->elem);
-				l = 0;
+				nivel =  lvl(n);
+				l = 1;
 			}
 		} 
 		n = n->next;
 	}
-	int i = 0;
 	n = minimum(tree->root);
 	while(n) {
-		if(lvl(tree, tree->root, n->elem) == nivel) {
-			r->index[i] = *((int*)n->info);
-			i++;
+		if(lvl(n) == nivel) {
+			r->index[r->size] = *((int*)n->info);
 			r->size++;
 		}
 		n = n->next;
@@ -169,7 +157,7 @@ Range* levelKeyQuery(TTree* tree) {
  * domeniu de valori specificat
  */
 Range* rangeKeyQuery(TTree* tree, char* q, char* p) {
-	if(tree == NULL || tree->root == NULL)
+	if(tree == NULL)
 		return NULL;
 
 	Range* r = (Range*) malloc(sizeof(Range));
